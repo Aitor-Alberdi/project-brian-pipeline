@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+
+# Pipeline outputs (large, run-time)
+runs/
+cache/
+logs/
+slurm/
+*.nii
+*.nii.gz
+*.mif
+*.tck
+*.pickle
+*.csv
+!Scripts/DRY_RUN_FULL_PIPELINE_EXAMPLE.txt
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local notes
+*.log
+*.out
+*.err

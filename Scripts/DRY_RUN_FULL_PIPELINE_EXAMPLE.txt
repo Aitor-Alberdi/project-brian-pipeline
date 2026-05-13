@@ -1,0 +1,41 @@
+[WARN] No encuentro en PATH: antsApplyTransforms, antsApplyTransformsToPoints, mrconvert, tckgen, tckmap
+[INFO] TRAIN IDs: 1
+[INFO] TRAIN first IDs: ['100408']
+[INFO] VAL IDs:   1
+[INFO] VAL first IDs:   ['123117']
+[DRY-RUN] Crearía tumor mask filtrada: /tmp/demo_tumor/tumor_inputs/UPENN-GBM-00001_11_automated_approx_segm_labels1_4.nii.gz
+
+[STEP 1] Registration TRAIN (20)
+[DRY-RUN] bash /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/pipeline_original_T1_MNI.sh --t1-upenn /tmp/UPENN-GBM-00001_11/UPENN-GBM-00001_11_T1.nii.gz --t1-hcp /opt/nfs/neuroinformatics/HCP/HCP_1200_qc_data/100408/T1w/T1w_acpc_dc_restore_brain.nii.gz --tumor-seg-upenn /tmp/UPENN-GBM-00001_11/UPENN-GBM-00001_11_automated_approx_segm.nii.gz --mni-brain /opt/nfs/neuroinformatics/BRIAN/tpl-MNI152NLin2009cAsym_res-01_desc-brain_T1w.nii.gz --outdir ./
+
+[STEP 1] Registration VALIDATION (65)
+[DRY-RUN] bash /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/pipeline_original_T1_MNI.sh --t1-upenn /tmp/UPENN-GBM-00001_11/UPENN-GBM-00001_11_T1.nii.gz --t1-hcp /opt/nfs/neuroinformatics/HCP/HCP_1200_qc_data/123117/T1w/T1w_acpc_dc_restore_brain.nii.gz --tumor-seg-upenn /tmp/UPENN-GBM-00001_11/UPENN-GBM-00001_11_automated_approx_segm.nii.gz --mni-brain /opt/nfs/neuroinformatics/BRIAN/tpl-MNI152NLin2009cAsym_res-01_desc-brain_T1w.nii.gz --outdir ./
+
+[STEP 2] mrconvert TRAIN
+[DRY-RUN] mrconvert /tmp/demo_tumor/registration/registration_20/100408/T1_hcp_RAS.nii.gz /tmp/demo_tumor/registration/registration_20/100408/T1_hcp_RAS.mif
+
+[STEP 2] mrconvert VALID
+[DRY-RUN] mrconvert /tmp/demo_tumor/registration/registration_65/123117/T1_hcp_RAS.nii.gz /tmp/demo_tumor/registration/registration_65/123117/T1_hcp_RAS.mif
+
+[STEP 3] Optimizer TRAIN
+[DRY-RUN] python3 -u /mnt/data/work_pipeline_changes/pipeline_changes/rand_seed_v2.py --data /opt/nfs/neuroinformatics/BRIAN/dODFs/odf_generation_results_20/100408/odf_sh_order12_mrtrix.mif --output analysis_participant_100408 -ang 20,90,2 -maxl 20,90,2 --radius 3 -st 0.3,1,0.05 --image /tmp/demo_tumor/registration/registration_20/100408/tumor14_in_HCP_T1grid_viaMNI_brain.nii.gz --template /tmp/demo_tumor/registration/registration_20/100408/T1_hcp_RAS.mif -co 0.04,0.1,0.005 --threshold 0.02 --pos_window_mm 5 --init_points 10 --init_percentiles 0,25,50,75,100 --patience_passes 10 --improve_tol 0.005 --target_obj 0.1
+
+[STEP 4] Collect best -> MNI + hist
+[DRY-RUN] python3 /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/collect_best_to_mni_3.py --mode training --train-root /tmp/demo_tumor/training_results --reg-root /tmp/demo_tumor/registration/registration_20 --out-dir /tmp/demo_tumor/best_mni_outputs --out-csv /tmp/demo_tumor/best_mni_outputs/best_params_all.csv --make-hists
+
+[STEP 5] Validation single-run
+[DRY-RUN] No existe /tmp/demo_tumor/best_mni_outputs/best_params_all.median.csv; usando parámetros placeholder para dibujar el flujo.
+[PARAMS:median] angle=60.000000 maxlen=60.000000 cutoff=0.020000 | x_mni=0.000000 y_mni=0.000000 z_mni=0.000000
+[DRY-RUN] python3 /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/warp_mni_to_subject_coords.py --reg-root /tmp/demo_tumor/registration/registration_65 --x 0.0 --y 0.0 --z 0.0 --space hcp --out-csv /tmp/demo_tumor/mni_to_native_coords.csv
+[DRY-RUN] 123117: coords nativas no disponibles en /tmp/demo_tumor/mni_to_native_coords.csv; usando placeholder (0,0,0).
+[DRY-RUN] python3 -u /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/validate_single_run_currC.py --data /opt/nfs/neuroinformatics/BRIAN/dODFs/odf_generation_results_66/123117/odf_sh_order12_mrtrix.mif --template /tmp/demo_tumor/registration/registration_65/123117/T1_hcp_RAS.mif --image /tmp/demo_tumor/registration/registration_65/123117/tumor14_in_HCP_T1grid_viaMNI_brain.nii.gz --output /tmp/demo_tumor/validation_results/123117/analysis_participant_123117 --x 0.0 --y 0.0 --z 0.0 --angle 60.0 --maxlen 60.0 --cutoff 0.02 --radius 3 --step 0.5 --threshold 0.02 --out-json /tmp/demo_tumor/validation_results/123117/metrics.json --out-csv /tmp/demo_tumor/validation_results/123117/metrics.csv
+
+[STEP 5b] Collect validation outputs -> MNI
+[DRY-RUN] python3 /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/collect_best_to_mni_3.py --mode validation --train-root /tmp/demo_tumor/validation_results --reg-root /tmp/demo_tumor/registration/registration_65 --out-dir /tmp/demo_tumor/validation_mni_outputs --out-csv /tmp/demo_tumor/validation_mni_outputs/validation_all.csv --val-threshold 0.02
+
+[STEP 6] Tumor UPENN -> MNI compartido + averages + métricas finales
+[DRY-RUN] antsApplyTransforms -d 3 -i /tmp/demo_tumor/registration/.tumor_upenn_selected_bin.nii.gz -r /tmp/demo_tumor/registration/registration_20/100408/MNI_brain_RAS.nii.gz -o /tmp/demo_tumor/registration/tumor_upenn_MNI.nii.gz -n NearestNeighbor -t /tmp/demo_tumor/registration/registration_20/100408/upT1_2mni_1Warp.nii.gz -t /tmp/demo_tumor/registration/registration_20/100408/upT1_2mni_0GenericAffine.mat
+[DRY-RUN] python3 /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/average_mni_across_participants.py --train-root /tmp/demo_tumor/best_mni_outputs --val-root /tmp/demo_tumor/validation_mni_outputs --out-dir /tmp/demo_tumor/avg_mni_outputs
+[DRY-RUN] python3 /mnt/data/work_pipeline_changes/pipeline_changes/Scripts/compare_average_tumors_to_reference.py --train-avg /tmp/demo_tumor/avg_mni_outputs/training_avg.nii.gz --val-avg /tmp/demo_tumor/avg_mni_outputs/validation_avg.nii.gz --reference /tmp/demo_tumor/registration/tumor_upenn_MNI.nii.gz --threshold 0.02 --out-csv /tmp/demo_tumor/avg_mni_outputs/average_vs_tumor_metrics.csv --save-thresholded-dir /tmp/demo_tumor/avg_mni_outputs/thresholded_avg_masks
+
+[DONE] Pipeline completo.
