@@ -1,0 +1,6 @@
+# Force LF for files executed on Linux cluster.
+*.sh    text eol=lf
+*.slurm text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
