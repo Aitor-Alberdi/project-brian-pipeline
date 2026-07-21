@@ -32,3 +32,6 @@ desktop.ini
 *.log
 *.out
 *.err
+
+# Backups
+*.bak*

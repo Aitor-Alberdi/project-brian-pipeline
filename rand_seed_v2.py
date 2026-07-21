@@ -61,6 +61,10 @@ def parse_arguments():
     p.add_argument('-minl', '--minlength', type=int, default=0)
     p.add_argument('-sl', '--select', type=int, default=50000, help='tckgen -select para la simulacion FINAL (re-run del best al terminar).')
     p.add_argument('--optim-select', type=int, default=10000, help='tckgen -select durante el loop del optimizer. Reducir a 10k da ~4x menos tiempo por eval con minimo impacto en el gradiente.')
+    p.add_argument('--algorithm', type=str, default='iFOD2', choices=['iFOD2', 'NullDist2', 'Tensor_Det', 'Tensor_Prob'],
+                   help='Algoritmo de tckgen. iFOD2 = usa la FOD (data real de difusion). '
+                        'NullDist2 = distribucion nula para iFOD2: ignora la orientacion de la FOD y '
+                        'genera streamlines por muestreo aleatorio (Morris et al. 2008). Mismo input que iFOD2.')
     p.add_argument('-f', '--force', action='store_true', default=False)
 
     req = p.add_argument_group('Required')
@@ -129,7 +133,7 @@ def run_simulation_with_given_parameters(args, x, y, z, maxlength, angle, step, 
         "-maxlength", f"{maxlength}",
         "-angle", f"{angle}",
         "-select", f"{sel}",
-        "-algorithm", "iFOD2",
+        "-algorithm", f"{getattr(args, 'algorithm', 'iFOD2')}",
         "-cutoff", f"{cutoff}",
         # "-step", f"{step}",
     ]
@@ -462,7 +466,7 @@ class CurriculumManager:
         global W_HD, W_DICE, W_PROJ, EPSILON
         EPSILON['sd_loss'] *= 0.90
         EPSILON['vol_err'] *= 0.90
-        W_HD, W_DICE, W_PROJ = 0.30, 0.60, 0.20
+        W_HD, W_DICE, W_PROJ = 0.20, 0.60, 0.20
         print(f"[Curriculum] enter=C eps_sd={EPSILON['sd_loss']:.3f} eps_vol={EPSILON['vol_err']:.3f} W_HD={W_HD:.2f} W_DICE={W_DICE:.2f} W_PROJ={W_PROJ:.2f}")
         self.stage = 'C'
 

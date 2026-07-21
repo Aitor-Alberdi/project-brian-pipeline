@@ -334,7 +334,7 @@ def run_simulation_with_given_parameters(
         "-select",
         f"{args.select}",
         "-algorithm",
-        "iFOD2",
+        f"{getattr(args, 'algorithm', 'iFOD2')}",
         "-cutoff",
         f"{cutoff}",
     ]
@@ -388,6 +388,10 @@ def parse_args() -> argparse.Namespace:
 
     # Resto (compat)
     p.add_argument("-sl", "--select", type=int, default=50000)
+    p.add_argument("--algorithm", type=str, default="iFOD2", choices=["iFOD2", "NullDist2", "Tensor_Det", "Tensor_Prob"],
+                   help="Algoritmo de tckgen. iFOD2 = FOD real; NullDist2 = distribucion nula "
+                        "(ignora orientacion de la FOD, muestreo aleatorio). Debe coincidir con el "
+                        "algoritmo usado en el entrenamiento.")
     p.add_argument("-minl", "--minlength", type=int, default=0)  # no lo usa tckgen aquí, pero lo dejamos
     p.add_argument("-t", "--threshold", type=float, default=0.02, help="Threshold binarización (sobre norm_mat)")
     p.add_argument("-st", "--step", type=float, default=FIXED_STEP, help="Step (si quieres, aunque está comentado en el optimizador)")
