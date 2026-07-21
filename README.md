@@ -38,6 +38,7 @@ See `Scripts/PIPELINE_FLOW_CLUSTER.md` for the per-stage mermaid diagram and
 ```
 proyect-brian-pipeline/
 ├── rand_seed_v2.py                          # SPSA+Adam+curriculum optimiser
+├── rand_seed_v2_resume.py                   # optimiser variant: resume from a saved run
 └── Scripts/
     ├── run_full_tumor_pipeline.py           # orchestrator
     ├── run_tumor_pipeline_cluster.sh        # bash wrapper (1 tumour = 1 invocation)
@@ -62,8 +63,47 @@ proyect-brian-pipeline/
     ├── check_cluster_inputs.sh              # sanity-check input paths
     ├── build_hcp_ids_list.sh                # emit 20+65 HCP IDs as flat file
     ├── PIPELINE_FLOW_CLUSTER.md             # mermaid pipeline diagram
-    └── DRY_RUN_FULL_PIPELINE_EXAMPLE.txt    # worked dry-run example
+    ├── DRY_RUN_FULL_PIPELINE_EXAMPLE.txt    # worked dry-run example
+    └── arms/                                # multi-arm tractography experiments (see below)
+        ├── run_stage_c_2.py                 # SHORE dODF + iFOD2 — training optimiser driver
+        ├── run_stage_c_2_w2.py              # SHORE arm, Workstation-2 variant
+        ├── run_postfit_c2.py                # SHORE arm — post-fit collect / validate / average
+        ├── run_stage_null.py                # NULL (NullDist2) — direction-blind baseline driver
+        ├── run_postfit_null.py              # NULL arm — post-fit
+        ├── run_postfit_null50k.py           # NULL arm, 50k-streamline variant — post-fit
+        ├── run_stage_dti.py                 # DTI (Tensor_Prob) — training driver
+        ├── run_postfit_dti.py               # DTI arm — post-fit
+        ├── run_stage_tensor.py              # tensor dODF + iFOD2 — training driver
+        ├── run_postfit_tensor.py            # tensor arm — post-fit
+        ├── compute_odfs_basis_fix.py        # build SHORE dODFs (all shells b=0/1000/2000/3000)
+        ├── compute_odfs_tensor.py           # build single-tensor dODFs (b≤1000)
+        ├── build_tensor_odfs_batch.sh       # batch wrapper for compute_odfs_tensor
+        ├── extract_b1000_dwi.py             # extract b=1000 shell for the DTI arm
+        ├── launch_null_w1.sh                # NULL launcher, Workstation-1
+        ├── launch_null_w2.sh                # NULL launcher, Workstation-2
+        ├── launch_null50k_w1.sh             # NULL-50k launcher, Workstation-1
+        ├── chain_dti_postfit.sh             # DTI stage → post-fit chain
+        └── tensor_9tum_chain.sh             # tensor arm, 9-tumour chain
 ```
+
+## Tracking arms (comparison experiments)
+
+`Scripts/arms/` holds the drivers for the diffusion-model / tracker comparison
+run on top of the base pipeline. All arms share the same optimiser
+(`rand_seed_v2.py`) and post-fit machinery; they differ only in the diffusion
+model and the `tckgen -algorithm`, selected via the `--algorithm` flag
+(`iFOD2` | `NullDist2` | `Tensor_Det` | `Tensor_Prob`):
+
+| arm | diffusion model | tracker | driver |
+|---|---|---|---|
+| **SHORE** | SHORE dODF (all shells) | `iFOD2` | `run_stage_c_2.py` / `run_postfit_c2.py` |
+| **TENSOR** | single-tensor dODF (b≤1000) | `iFOD2` | `run_stage_tensor.py` / `run_postfit_tensor.py` |
+| **DTI** | tensor | `Tensor_Prob` | `run_stage_dti.py` / `run_postfit_dti.py` |
+| **NULL** | SHORE dODF (same file as SHORE) | `NullDist2` | `run_stage_null.py` / `run_postfit_null.py` |
+
+NULL vs SHORE share the identical ODF and differ only in the tracker, so NULL is
+the direction-blind floor; SHORE vs TENSOR share the identical tracker and differ
+only in the diffusion model.
 
 ## Dependencies
 
@@ -186,7 +226,7 @@ All produced by `validate_single_run_currC.py`:
 - **surface_dice** = fraction of surface points within `SURF_TOL_MM = 2 mm` of the GT surface
 - **proj_dice_worst** = `min(Dice_xy, Dice_xz, Dice_yz)` over the three axis-aligned projections
 
-The composite **objective** weights stage-C losses: `w_hd · hd_norm + w_dice · dice_loss + w_proj · proj_loss_worst` with `(w_hd, w_dice, w_proj) = (0.3, 0.6, 0.2)` and `dice_loss = 1 − dice`.
+The composite **objective** weights the losses: `w_hd · hd_norm + w_dice · dice_loss + w_proj · proj_loss_worst` with `dice_loss = 1 − dice`. The curriculum sets the weights per stage — A = `(0.55, 0.45, 0.0)`, B = `(0.35, 0.55, 0.10)`, C = `(0.20, 0.60, 0.20)` — so the final stage-C weights are `(w_hd, w_dice, w_proj) = (0.20, 0.60, 0.20)`.
 
 ## Notes
 

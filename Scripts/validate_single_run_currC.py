@@ -4,7 +4,7 @@
 Ejecuta UNA sola simulación (tckgen + tckmap) con parámetros fijos y calcula
 el error con exactamente la misma lógica que el optimizador `rand_seed_v2.py`,
 pero fijando directamente el "curriculum C" (última etapa):
-- Pesos: W_HD=0.30, W_DICE=0.60, W_PROJ=0.20
+- Pesos: W_HD=0.20, W_DICE=0.60, W_PROJ=0.20
 - EPSILON endurecido 2 veces (A->B y B->C):
     sd_loss = 0.55*(0.9^2)
     vol_err = 0.15*(0.9^2)
@@ -54,7 +54,7 @@ SURF_TOL_MM = 2.0
 USE_ASSD_INSTEAD_OF_HD95 = False
 
 # Pesos de la etapa C del optimizador rand_seed_v2.py
-W_HD = 0.30
+W_HD = 0.20
 W_DICE = 0.60
 W_PROJ = 0.20
 
@@ -337,6 +337,8 @@ def run_simulation_with_given_parameters(
         f"{getattr(args, 'algorithm', 'iFOD2')}",
         "-cutoff",
         f"{cutoff}",
+        "-step",
+        f"{step}",
     ]
 
     cmd_tckmap = [

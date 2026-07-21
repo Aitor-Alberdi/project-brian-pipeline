@@ -135,7 +135,7 @@ def run_simulation_with_given_parameters(args, x, y, z, maxlength, angle, step, 
         "-select", f"{sel}",
         "-algorithm", f"{getattr(args, 'algorithm', 'iFOD2')}",
         "-cutoff", f"{cutoff}",
-        # "-step", f"{step}",
+        "-step", f"{step}",
     ]
 
     cmd_tckmap = [
