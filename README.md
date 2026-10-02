@@ -230,6 +230,10 @@ The composite **objective** weights the losses: `w_hd · hd_norm + w_dice · dic
 
 ## Notes
 
+- **Integration step.** `tckgen` is called without `-step`, so iFOD2 uses its
+  default step of half the voxel size (0.625 mm on the 1.25 mm dODF grid).
+  This is the setting of the published runs; the `--step` / `-st` arguments
+  are parsed for compatibility only and are not passed to `tckgen`.
 - The HCP → MNI ANTs registration depends only on the HCP subject + MNI
   template (not on the tumour), so it is computed **once per HCP subject**
   and reused across every tumour. The shared cache at

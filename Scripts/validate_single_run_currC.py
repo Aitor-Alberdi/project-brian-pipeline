@@ -337,8 +337,7 @@ def run_simulation_with_given_parameters(
         f"{getattr(args, 'algorithm', 'iFOD2')}",
         "-cutoff",
         f"{cutoff}",
-        "-step",
-        f"{step}",
+        # "-step" NOT set: iFOD2 default step = 0.5 x voxel = 0.625 mm on the 1.25 mm ODF grid
     ]
 
     cmd_tckmap = [
@@ -396,7 +395,10 @@ def parse_args() -> argparse.Namespace:
                         "algoritmo usado en el entrenamiento.")
     p.add_argument("-minl", "--minlength", type=int, default=0)  # no lo usa tckgen aquí, pero lo dejamos
     p.add_argument("-t", "--threshold", type=float, default=0.02, help="Threshold binarización (sobre norm_mat)")
-    p.add_argument("-st", "--step", type=float, default=FIXED_STEP, help="Step (si quieres, aunque está comentado en el optimizador)")
+    p.add_argument("-st", "--step", type=float, default=FIXED_STEP,
+                   help=f"Parsed for compatibility only. NOT passed to tckgen: the published "
+                        f"runs leave -step unset, so iFOD2's default step (0.5 x voxel = "
+                        f"0.625 mm on the 1.25 mm ODF grid) applies. See README notes.")
     p.add_argument("-f", "--force", action="store_true", default=False)
     p.add_argument("--keep-tck", action="store_true", default=False, help="Conservar el .tck tras generar el .nii.gz (debug)")
 

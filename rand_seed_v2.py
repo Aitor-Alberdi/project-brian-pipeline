@@ -135,7 +135,7 @@ def run_simulation_with_given_parameters(args, x, y, z, maxlength, angle, step, 
         "-select", f"{sel}",
         "-algorithm", f"{getattr(args, 'algorithm', 'iFOD2')}",
         "-cutoff", f"{cutoff}",
-        "-step", f"{step}",
+        # "-step", f"{step}",   # NOT set: iFOD2 default step = 0.5 x voxel = 0.625 mm on the 1.25 mm ODF grid
     ]
 
     cmd_tckmap = [
