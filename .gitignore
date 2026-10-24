@@ -20,6 +20,7 @@ slurm/
 *.pickle
 *.csv
 !Scripts/DRY_RUN_FULL_PIPELINE_EXAMPLE.txt
+!results/*.csv
 
 # IDE / OS
 .vscode/
